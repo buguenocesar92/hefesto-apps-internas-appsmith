@@ -205,6 +205,73 @@ Detalle completo en [`docs/01-INSTALACION-DOCKER.md`](docs/01-INSTALACION-DOCKER
 
 ---
 
+## Despliegue en Coolify (MVP Hefesto)
+
+Coolify usa el `compose.yaml` de la raíz **tal cual** (sin overrides:
+`config/compose.coolify.yaml` queda obsoleto con esta versión). Traefik
+termina TLS y enruta el tráfico al puerto 80 del contenedor por la red
+interna de Docker, así que el `compose.yaml` ya no publica ningún puerto
+al host.
+
+### Requisitos del servidor
+
+- **Recursos:** 2 vCPU y **8 GB de RAM** mínimos (recomendación oficial de
+  Appsmith; la base embebida MongoDB es lo que pesa).
+- **Imagen fija:** `appsmith/appsmith-ce:v2.5.0`. Coolify la baja; no
+  cambiar a `:latest`.
+- **Disco:** ~5 GB para `/appsmith-stacks` (config, datos de Mongo, Redis,
+  Postgres embebido, respaldos y logs).
+
+### Variables de entorno obligatorias en Coolify
+
+Coolify las pide con el mismo nombre que aparecen en `.env.example`.
+
+| Variable | Qué poner | Notas |
+|---|---|---|
+| `APPSMITH_ENCRYPTION_PASSWORD` | `openssl rand -hex 32` | **No se recupera si se pierde.** Guardar en el gestor de contraseñas. |
+| `APPSMITH_ENCRYPTION_SALT` | `openssl rand -hex 32` | Igual. |
+| `APPSMITH_BASE_URL` | `https://apps.tu-dominio.cl` | Sin barra final, con `https`. La usa Appsmith para validar `Origin`. |
+| `APPSMITH_CUSTOM_DOMAIN` | **dejar vacía** | Si se llena, el Caddy interno intenta emitir su propio TLS y compite con el de Coolify. |
+| `APPSMITH_ADMIN_EMAILS` | `admin@tu-dominio.cl` | Correo(s) del primer administrador. Fijo: no se puede cambiar después sin acceso al contenedor. |
+| `APPSMITH_SIGNUP_DISABLED` | `false` (primer despliegue) → `true` (después) | Ver abajo. |
+
+### Primer despliegue: ventana de admin
+
+1. Levantar con `APPSMITH_SIGNUP_DISABLED=false` y `APPSMITH_ADMIN_EMAILS`
+   puesto en el correo del primer administrador.
+2. Iniciar sesión en la URL pública con ese correo. Appsmith promueve al
+   usuario a Instance Administrator cuando coincide con
+   `APPSMITH_ADMIN_EMAILS`. **No hay variable para fijar la contraseña:**
+   la contraseña la pone el usuario en el formulario de registro.
+3. Cerrar el registro cambiando `APPSMITH_SIGNUP_DISABLED=true` en Coolify
+   y re-desplegar. Verificar en `Admin Settings > Authentication` que el
+   toggle quedó cerrado.
+
+### Volumen persistente
+
+Coolify monta un volumen nombrado (sin `name:` fijo en el YAML) en
+`/appsmith-stacks`. Contiene configuración, datos de MongoDB/Redis/Postgres
+embebido, respaldos y logs. **No es un bind al host**; Coolify lo nombra a
+partir del proyecto. Si se pierde ese volumen, se pierden las claves
+guardadas y los datos.
+
+### Validación automática
+
+`scripts/coolify-check.sh` corre `docker compose config` con variables
+ficticias (no reales) y verifica que el `compose.yaml` cumple el contrato
+de Coolify:
+
+- Ningún servicio sin `profiles:` publica puertos, usa `container_name`,
+  ni declara `name:` fijo a nivel raíz, en redes o en volúmenes.
+
+Útil como check de CI antes de hacer commit al `compose.yaml`.
+
+```bash
+bash scripts/coolify-check.sh
+```
+
+---
+
 ## Lo más importante que hay que saber
 
 ### 1. Las claves de cifrado no se pueden recuperar
