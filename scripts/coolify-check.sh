@@ -53,6 +53,21 @@ readonly COMPOSES=(
 # Composites que hablan con el Postgres compartido. En este kit: ninguno.
 readonly SUPABASE_PG=()
 
+# Claves prohibidas en servicios sin profiles (contrato 1).
+# Declarada UNA sola vez fuera del for: con dos entradas en COMPOSES la
+# segunda vuelta abortaba por set -e con "variable de solo lectura".
+readonly PROHIBIDAS=(
+  "ports"
+  "container_name"
+  "privileged"
+  "cap_add"
+  "devices"
+  "network_mode"
+  "pid"
+  "ipc"
+  "security_opt"
+)
+
 # True si la ruta absoluta del compose coincide con uno marcado como pg.
 es_pg() {
   local c="$1"
@@ -159,6 +174,20 @@ for entry in "${COMPOSES[@]}"; do
     TMP_ENV=""
     continue
   fi
+  # Pasada C: SIN --project-name y con COMPOSE_PROJECT_NAME vacio, para
+  # obtener el nombre REAL que Coolify sacaria. Si el YAML tiene `name:`
+  # raiz declarado, ese nombre se usa y reemplaza al derivado del directorio.
+  # Por eso comparar con basename(REPO_ROOT) es lo que detecta la regresion.
+  if ! render_c="$(env -u COMPOSE_PROJECT_NAME docker compose \
+        --project-directory "$REPO_ROOT" \
+        -f "$compose_abs" \
+        --env-file "$TMP_ENV" \
+        config --format json 2>/dev/null)"; then
+    fail "$app_slug: docker compose config fallo en la pasada sin project-name (revisa el archivo compose)"
+    rm -f "$TMP_ENV"
+    TMP_ENV=""
+    continue
+  fi
   render_json="$render_a"
   rm -f "$TMP_ENV"
   TMP_ENV=""
@@ -169,18 +198,6 @@ for entry in "${COMPOSES[@]}"; do
   # Servicios sin profiles (los que Coolify levanta por defecto).
   servicios="$(echo "$render_json" \
     | jq -r '.services | to_entries[] | select((.value.profiles // []) | length == 0) | .key')"
-
-  readonly PROHIBIDAS=(
-    "ports"
-    "container_name"
-    "privileged"
-    "cap_add"
-    "devices"
-    "network_mode"
-    "pid"
-    "ipc"
-    "security_opt"
-  )
 
   fallo_p1=0
   for s in $servicios; do
@@ -226,22 +243,28 @@ for entry in "${COMPOSES[@]}"; do
   fi
 
   # --- Contrato 2: sin name: fijo (raiz, redes y volumenes) ------------
-  # Lo que Coolify rechaza NO es que el render muestre un name (eso SIEMPRE
-  # ocurre porque Docker deriva del project-name): es que ese `name:` este
-  # DECLARADO en el YAML del compose. Comparamos dos pasadas con project-name
-  # distintos: si el nombre cambia entre A y B, era derivado y no esta
-  # declarado; si no cambia, esta HARDCODEADO en el YAML.
+  # La raiz se valida contra lo que Coolify sacaria realmente (pasada C,
+  # sin --project-name): el nombre que devuelve debe coincidir con
+  # basename(REPO_ROOT) saneado a [a-z0-9_-]. Si NO coincide, el YAML tiene
+  # un `name:` raiz HARDCODEADO y Coolify no va a poder nombrarlo.
+  # Redes y volumenes: A vs B (los nombres derivados cambian con
+  # --project-name; los declarados NO).
   info "  [2/2] chequeando nombres sin forzar..."
 
+  # Capturamos el estado de FAILED antes de este contrato para saber si
+  # esta vuelta introdujo fallos nuevos (el contador ok ya no depende
+  # solo de fallo_p1).
+  antes_p2=$FAILED
+
   # -- raiz --
-  name_a="$(echo "$render_a" | jq -r '.name // empty')"
-  name_b="$(echo "$render_b" | jq -r '.name // empty')"
-  if [ -z "$name_a" ] && [ -z "$name_b" ]; then
-    pass "$app_slug: raiz sin name derivado ni declarado"
-  elif [ "$name_a" = "$name_b" ]; then
-    fail "$app_slug: compose tiene 'name:' raiz HARDCODEADO: '$name_a' (Coolify debe poder nombrarlo)"
+  name_c="$(echo "$render_c" | jq -r '.name // empty')"
+  expected_basename="$(basename "$REPO_ROOT" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]/_/g')"
+  if [ -z "$name_c" ]; then
+    fail "$app_slug: el render sin project-name no devolvio .name (revisa el compose)"
+  elif [ "$name_c" = "$expected_basename" ]; then
+    pass "$app_slug: name raiz derivado del directorio (no declarado en YAML)"
   else
-    pass "$app_slug: name raiz derivado del project-name (no declarado en YAML)"
+    fail "$app_slug: compose tiene 'name:' raiz HARDCODEADO: '$name_c' (esperado derivado del directorio '$expected_basename'; Coolify debe poder nombrarlo)"
   fi
 
   # -- redes --
@@ -285,11 +308,10 @@ for entry in "${COMPOSES[@]}"; do
     fi
   fi
 
-  # Si llegamos aqui sin fallo_p1 podemos contarlo como OK para este compose,
-  # siempre que las validaciones 2 no hayan registrado fallos en este loop.
-  # Lo correcto: si no hubo ningun fail con $app_slug en esta iteracion,
-  # lo contamos.
-  if [ "$fallo_p1" -eq 0 ]; then
+  # Contamos como OK solo si en esta iteracion NO hubo ningun fail con
+  # $app_slug. Antes solo miraba fallo_p1, lo que ocultaba fallos del 2
+  # (redes/volumenes/raiz). Comparamos FAILED antes y despues del Contrato 2.
+  if [ "$antes_p2" = "$FAILED" ]; then
     ok=$((ok + 1))
   fi
 done
