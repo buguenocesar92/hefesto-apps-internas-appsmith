@@ -129,6 +129,14 @@ for entry in "${COMPOSES[@]}"; do
 
   info "comprobando $app_slug -> $compose_rel"
 
+  # Capturamos FAILED al COMIENZO de la vuelta, no justo antes del Contrato 2.
+  # Si Capturamos recien ahi, los fallos del Contrato 1 (poderes prohibidos,
+  # binds fuera del repo, docker.sock) ya habrian incrementado FAILED, y la
+  # comparacion del final los cuenta como si hubieran ocurrido en el Contrato 2.
+  # La idea original era esa: "esta vuelta introdujo fallos nuevos?". Si la
+  # foto se toma al empezar, la respuesta cubre TODOS los contratos.
+  antes=$FAILED
+
   if [ ! -f "$compose_abs" ]; then
     fail "$app_slug: compose no existe ($compose_rel)"
     continue
@@ -251,14 +259,14 @@ for entry in "${COMPOSES[@]}"; do
   # --project-name; los declarados NO).
   info "  [2/2] chequeando nombres sin forzar..."
 
-  # Capturamos el estado de FAILED antes de este contrato para saber si
-  # esta vuelta introdujo fallos nuevos (el contador ok ya no depende
-  # solo de fallo_p1).
-  antes_p2=$FAILED
-
   # -- raiz --
+  # NOTA sobre el saneado: la linea siguiente compara .name (lo que sacaria
+  # Coolify) contra basename(REPO_ROOT) saneado. Compose NO reemplaza los
+  # caracteres fuera de [a-z0-9_-] por '_': los ELIMINA. Si aca los
+  # sustituyes por '_', un directorio como 'mi.repo' o 'repo-final-1.0'
+  # falla este check aunque el YAML no tenga `name:` declarado.
   name_c="$(echo "$render_c" | jq -r '.name // empty')"
-  expected_basename="$(basename "$REPO_ROOT" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]/_/g')"
+  expected_basename="$(basename "$REPO_ROOT" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]//g')"
   if [ -z "$name_c" ]; then
     fail "$app_slug: el render sin project-name no devolvio .name (revisa el compose)"
   elif [ "$name_c" = "$expected_basename" ]; then
@@ -309,9 +317,12 @@ for entry in "${COMPOSES[@]}"; do
   fi
 
   # Contamos como OK solo si en esta iteracion NO hubo ningun fail con
-  # $app_slug. Antes solo miraba fallo_p1, lo que ocultaba fallos del 2
-  # (redes/volumenes/raiz). Comparamos FAILED antes y despues del Contrato 2.
-  if [ "$antes_p2" = "$FAILED" ]; then
+  # $app_slug. Comparamos FAILED antes (capturado al inicio del loop, justo
+  # despues del info) y despues del Contrato 2; si esta vuelta introdujo
+  # algun fail, no se cuenta. Antes solo miraba fallo_p1, lo que ocultaba
+  # fallos del Contrato 2 (redes/volumenes/raiz) y, peor aun, capturaba
+  # el snapshot DESPUES del Contrato 1, asi que tampoco esos.
+  if [ "$antes" = "$FAILED" ]; then
     ok=$((ok + 1))
   fi
 done
