@@ -1,0 +1,57 @@
+# =============================================================================
+# Hefesto Studio - Kit Appsmith Community Edition
+# Archivo : config/compose.coolify.yaml
+# Uso     : override para Coolify. NO se usa con `docker compose up` normal.
+#
+#   cd /ruta/del/kit
+#   docker compose -f compose.yaml -f config/compose.coolify.yaml up -d
+#
+# QUE CAMBIA Y POR QUE
+#   compose.yaml publica  127.0.0.1:8080:80
+#   Eso es lo correcto para un VPS con un reverse proxy instalado en el mismo
+#   host: nadie alcanza el puerto desde la red publica.
+#
+#   En Coolify el proxy (Traefik) corre en otro contenedor, no en el host. Un
+#   bind a 127.0.0.1 lo haria inalcanzable para el proxy: por eso este
+#   override quita el bind a loopback.
+#
+# PENDIENTE DE VERIFICAR EN EL SERVIDOR (ver docs/07)
+#   Hefesto no ejecuto Coolify en este entorno. La forma exacta de publicized
+#   depende de si Coolify enruta por la red de Docker o por un puerto del host.
+#   Se dejaron las dos variantes documentadas en docs/02-INSTALACION-COOLIFY.md.
+#   Elegir una, probarla, y borrar de este archivo la que no se uso.
+# =============================================================================
+
+name: hefesto-appsmith
+
+services:
+  appsmith:
+    # --- Variante A (por defecto en este archivo) ---------------------------
+    # Publica en el host sin bind a loopback, para que el proxy de Coolify
+    # alcance el contenedor por la IP del host.
+    # Reemplaza el mapeo de compose.yaml: en Compose las listas de `ports`
+    # se reemplazan, no se agregan.
+    ports:
+      - "8080:80"
+
+    # --- Variante B ---------------------------------------------------------
+    # Si Coolify enruta directamente por la red de Docker (lo habitual en
+    # Coolify), se puede dejar el servicio sin puertos publicados y unirlo a
+    # la red del proxy. Para usarla: descomentar este bloque y COMENTAR el
+    # bloque `ports` de arriba.
+    #
+    # ports: []
+    # networks:
+    #   - coolify
+    #
+    # networks:
+    #   coolify:
+    #     external: true
+
+    # --- Lo que NO se cambia -----------------------------------------------
+    # - El puerto 443 del contenedor NO se publica a proposito. La variable
+    #   APPSMITH_CUSTOM_DOMAIN queda vacia en .env, de modo que el Caddy
+    #   interno no intenta emitir certificado propio y no compite con el
+    #   certificado que emite Coolify. Ver docs/03.
+    # - El volumen `appsmith-stacks` NO se cambia. Debe seguir siendo un
+    #   volumen nombrado y persistente entre despliegues.

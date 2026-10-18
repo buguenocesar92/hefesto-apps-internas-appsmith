@@ -1,0 +1,44 @@
+# =============================================================================
+# Hefesto Studio - Kit Appsmith Community Edition
+# Archivo : .gitignore
+# =============================================================================
+
+# --- Secretos ---------------------------------------------------------------
+# El archivo de configuracion real. NUNCA debe entrar al repositorio.
+.env
+.env.*
+!.env.example
+
+# --- Datos del kit ----------------------------------------------------------
+# Respaldos: pueden contener docker.env, que a su vez tiene la clave de
+# cifrado de secretos. Restringir a chmod 700 y NO versionar.
+respaldos/
+*.tar.gz
+*.tar.gz.enc
+*.tgz
+SHA256SUMS
+manifiesto.json
+COMPLETO
+
+# --- Datos de ejemplo generados ---------------------------------------------
+# Datos locales de PostgreSQL si alguien levanta el esquema de demostracion.
+ejemplos/datos/
+ejemplos/*.sqlite
+pgdata/
+
+# --- Sistema operativo y editores -------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- Logs -------------------------------------------------------------------
+*.log
+logs/
+
+# --- Credenciales de la demo de Appsmith ------------------------------------
+# Datasource exported con token de sesion. NUNCA versionar.
+datasource-export.json

@@ -1,0 +1,172 @@
+# =============================================================================
+# Hefesto Studio - Kit Appsmith Community Edition (Apps internas)
+# Archivo     : compose.yaml
+# Version kit : 1.0.0
+# Estado      : kit preparado (no ejecutado en un servidor; ver docs/07)
+# -----------------------------------------------------------------------------
+# QUE ES ESTO
+#   Un despliegue de UNA instancia de Appsmith Community Edition (appsmith-ce).
+#   Un solo contenedor: el servidor de Appsmith, el editor, MongoDB, Redis,
+#   PostgreSQL embebido, Caddy y supervisord corren dentro de la misma imagen.
+#
+# QUE NO ES ESTO
+#   No es multi-tenant. Esta instancia es para UN cliente. No hay aislamiento
+#   entre clientes porque no existe el concepto de multi-inquilino aqui.
+#
+# FUENTES (verificadas el 2026-10-16)
+#   Imagen y volumen  : https://appsmith.com/docs/getting-started/setup/installation-guides/docker
+#   Healthcheck       : Dockerfile upstream -> HEALTHCHECK ... CMD "/opt/appsmith/healthcheck.sh"
+#                       https://github.com/appsmithorg/appsmith/blob/release/Dockerfile
+#   Version de imagen : https://hub.docker.com/v2/repositories/appsmith/appsmith-ce/tags
+# =============================================================================
+
+name: hefesto-appsmith
+
+services:
+  appsmith:
+    # Version FIJADA. Nunca usar :latest ni :release en produccion.
+    # v2.5.0 publicada el 2026-10-09 en Docker Hub.
+    # Digest del indice multi-arch (linux/amd64 + linux/arm64), util para fijar
+    # el contenido exacto y no solo la etiqueta:
+    #   sha256:5b6133ab8317b98edf9dc0315a02d12f9861ab2acc89386c0b1f5b7938dfeb90
+    # Para fijar por digest en vez de etiqueta:
+    #   image: appsmith/appsmith-ce@sha256:5b6133ab8317b98edf9dc0315a02d12f9861ab2acc89386c0b1f5b7938dfeb90
+    image: appsmith/appsmith-ce:v2.5.0
+
+    container_name: appsmith
+
+    restart: unless-stopped
+
+    # ------------------------------------------------------------------------
+    # Puertos
+    # ------------------------------------------------------------------------
+    # Solo se publica HTTP (puerto 80 del contenedor). El TLS lo termina el
+    # reverse proxy (Traefik de Coolify, nginx, Caddy del host).
+    #
+    # POR QUE NO 80 Y 443 DEL CONTENEDOR: cuando existe APPSMITH_CUSTOM_DOMAIN,
+    # el Caddy interno intenta emitir su propio certificado Let's Encrypt y
+    # servir HTTPS en 443 (fuente: deploy/docker/fs/opt/appsmith/caddy-reconfigure.mjs).
+    # Detras de un proxy eso es redundante y suele fallar el desafio ACME.
+    # Ver docs/02-INSTALACION-COOLIFY.md y docs/03 para el caso contrario
+    # (exposicion directa sin proxy).
+    #
+    # El bind a 127.0.0.1 evita que el puerto quede abierto a internet si el
+    # reverse proxy se cae.
+    ports:
+      - "127.0.0.1:8080:80"
+
+    # ------------------------------------------------------------------------
+    # Volumen
+    # ------------------------------------------------------------------------
+    # Unica ruta persistente. Contiene configuracion, datos, respaldos y logs.
+    #   /appsmith-stacks/configuration  -> docker.env (incluye secretos)
+    #   /appsmith-stacks/data/mongodb   -> base de datos interna (MongoDB)
+    #   /appsmith-stacks/data/redis     -> cache y sesiones
+    #   /appsmith-stacks/data/postgres  -> PostgreSQL embebido
+    #   /appsmith-stacks/data/backup    -> archivos de respaldo
+    #   /appsmith-stacks/data/restore   -> archivos a restaurar
+    #   /appsmith-stacks/logs           -> logs (no criticos)
+    #   /appsmith-stacks/ssl            -> certificado propio (opcional)
+    #
+    # NO se publica ningun puerto de MongoDB ni de Redis: el entrypoint arranca
+    # mongod con --bind_ip localhost, o sea que no aceptan conexiones externas
+    # de todas formas (fuente: deploy/docker/fs/opt/appsmith/templates/supervisord/mongodb.conf).
+    volumes:
+      - appsmith-stacks:/appsmith-stacks
+
+    # ------------------------------------------------------------------------
+    # Variables de entorno
+    # ------------------------------------------------------------------------
+    # Las variables externas APPSMITH_* tienen prioridad sobre el archivo
+    # docker.env que esta dentro del volumen, y sobre lo guardado en
+    # Admin Settings (fuente: docs de Docker de Appsmith, seccion
+    # "Environment configuration format").
+    # Se usan el forma ${VAR:?mensaje} para que `docker compose config` falle de
+    # inmediato y con un mensaje claro si falta una obligatoria.
+    environment:
+      # --- OBLIGATORIAS -----------------------------------------------------
+      # Protegen las credenciales de las fuentes de datos. Ver docs/03.
+      # Si no se fijan, la imagen las genera y las guarda en docker.env dentro
+      # del volumen: si se pierde ese archivo, las credenciales guardadas en
+      # Appsmith quedan indescifrables para siempre.
+      APPSMITH_ENCRYPTION_PASSWORD: "${APPSMITH_ENCRYPTION_PASSWORD:?falta APPSMITH_ENCRYPTION_PASSWORD - ver .env.example}"
+      APPSMITH_ENCRYPTION_SALT: "${APPSMITH_ENCRYPTION_SALT:?falta APPSMITH_ENCRYPTION_SALT - ver .env.example}"
+
+      # --- SEGURIDAD --------------------------------------------------------
+      # URLs permitidas para reinicio de clave y verificacion de correo.
+      # Activa validacion del header Origin y evita ataques de toma de cuenta.
+      # Recomendacion explicita de la documentacion oficial.
+      APPSMITH_BASE_URL: "${APPSMITH_BASE_URL:-}"
+
+      # Correos que quedan con permisos de Instance Administrator.
+      # OJO: no existe variable para fijar la contraseña del administrador;
+      # el primer usuario se crea en el formulario web (ver docs/04).
+      APPSMITH_ADMIN_EMAILS: "${APPSMITH_ADMIN_EMAILS:-}"
+
+      # true = cierra el registro de cuentas nuevas. No afecta a los usuarios
+      # ya existentes ni al registro de los administradores declarados arriba.
+      APPSMITH_SIGNUP_DISABLED: "${APPSMITH_SIGNUP_DISABLED:-true}"
+
+      # Limita el registro a estos dominios. Lista separada por comas.
+      APPSMITH_SIGNUP_ALLOWED_DOMAINS: "${APPSMITH_SIGNUP_ALLOWED_DOMAINS:-}"
+
+      # Maximo de peticiones por segundo y por cliente (100 por defecto).
+      APPSMITH_RATE_LIMIT: "${APPSMITH_RATE_LIMIT:-}"
+
+      # Dominios autorizados a embeber Appsmith en un iframe.
+      # "'self'" = solo el mismo origen (valor recomendado y mas seguro).
+      APPSMITH_ALLOWED_FRAME_ANCESTORS: "${APPSMITH_ALLOWED_FRAME_ANCESTORS:-}"
+
+      # --- PRIVACIDAD Y RENDIMIENTO ----------------------------------------
+      # true = no enviar telemetria anonimizada a Appsmith.
+      APPSMITH_DISABLE_TELEMETRY: "${APPSMITH_DISABLE_TELEMETRY:-true}"
+
+      # true = quitar la app de Intercom de las instancias autoalojadas.
+      APPSMITH_DISABLE_INTERCOM: "${APPSMITH_DISABLE_INTERCOM:-true}"
+
+      # Limite de archivos adjuntos en MB (200 por defecto).
+      APPSMITH_CODEC_SIZE: "${APPSMITH_CODEC_SIZE:-}"
+
+      # Timeout interno del servidor en segundos (60 por defecto).
+      APPSMITH_SERVER_TIMEOUT: "${APPSMITH_SERVER_TIMEOUT:-}"
+
+      # Raiz de los repositorios Git cloneados. Debe quedar dentro del volumen
+      # persistente o los repos se pierden en cada reinicio.
+      # Descomentar solo si se va a usar la integracion con Git.
+      # APPSMITH_GIT_ROOT: "/appsmith-stacks/data/git"
+
+      # --- AJUSTE AVANZADO (opcional) --------------------------------------
+      # Limita el heap de la JVM. Es una variable de despliegue: se fija por el
+      # entorno del contenedor (Compose o Helm), no por docker.env.
+      # NO se recomienda tocarla sin medir: el valor por defecto de la imagen
+      # no fue verificado por Hefesto. Ver docs/07.
+      # APPSMITH_JAVA_HEAP_ARG: "-Xmx4g"
+
+    # ------------------------------------------------------------------------
+    # Healthcheck
+    # ------------------------------------------------------------------------
+    # Este NO es un curl inventado. La imagen upstream ya define
+    #   HEALTHCHECK --interval=15s --timeout=15s --start-period=45s \
+    #     CMD "/opt/appsmith/healthcheck.sh"
+    # y ese script verifica el estado de los procesos supervisord (editor, rts,
+    # backend, y mcp si existe) mas un HTTP a http://localhost/ del editor.
+    # Se declara aqui con los mismos parametros para que el estado sea visible
+    # en `docker compose ps` y en Coolify.
+    # Fuente: https://github.com/appsmithorg/appsmith/blob/release/Dockerfile
+    healthcheck:
+      test: ["CMD", "/opt/appsmith/healthcheck.sh"]
+      interval: 15s
+      timeout: 15s
+      start_period: 45s
+      retries: 5
+
+    # Limite de logs para que el contenedor no llene el disco del VPS.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  appsmith-stacks:
+    name: appsmith-stacks
