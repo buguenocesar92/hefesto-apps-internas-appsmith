@@ -231,9 +231,12 @@ Coolify las pide con el mismo nombre que aparecen en `.env.example`.
 | `APPSMITH_ENCRYPTION_PASSWORD` | `openssl rand -hex 32` | **No se recupera si se pierde.** Guardar en el gestor de contraseñas. |
 | `APPSMITH_ENCRYPTION_SALT` | `openssl rand -hex 32` | Igual. |
 | `APPSMITH_BASE_URL` | `https://apps.tu-dominio.cl` | Sin barra final, con `https`. La usa Appsmith para validar `Origin`. |
-| `APPSMITH_CUSTOM_DOMAIN` | **dejar vacía** | Si se llena, el Caddy interno intenta emitir su propio TLS y compite con el de Coolify. |
-| `APPSMITH_ADMIN_EMAILS` | `admin@tu-dominio.cl` | Correo(s) del primer administrador. Fijo: no se puede cambiar después sin acceso al contenedor. |
+| `APPSMITH_ADMIN_EMAILS` | `admin@tu-dominio.cl` | Se puede cambiar en Coolify y re-desplegar; los correos listados quedan como Instance Administrator. |
 | `APPSMITH_SIGNUP_DISABLED` | `false` (primer despliegue) → `true` (después) | Ver abajo. |
+
+> `APPSMITH_CUSTOM_DOMAIN` **no se pasa al contenedor a propósito; no
+> definirla** en Coolify. Si se llena, el Caddy interno intenta emitir su
+> propio TLS y compite con el de Coolify.
 
 ### Primer despliegue: ventana de admin
 
