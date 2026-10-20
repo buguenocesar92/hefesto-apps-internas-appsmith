@@ -136,7 +136,7 @@ instancia. El detalle está en `04-PRIMERA-CUENTA-Y-USUARIOS.md`.
 
 Con Coolify o con nginx en el mismo host, lo normal es:
 
-- `compose.yaml` publica `127.0.0.1:8080:80`. El puerto queda accesible solo
+- `compose.yaml` pública `127.0.0.1:8080:80`. El puerto queda accesible solo
   desde el servidor, nunca desde internet.
 - El proxy termina TLS y reenvía a `127.0.0.1:8080`.
 

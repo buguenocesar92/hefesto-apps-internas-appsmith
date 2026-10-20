@@ -254,7 +254,7 @@ anotado en `07-PRUEBAS-DE-ACEPTACION.md` como pendiente de medición.
 
 ## Variables que existen pero no se exponen
 
-Estas sí las usa la imagen internamente, y `compose.yaml` **no** las publica:
+Estas sí las usa la imagen internamente, y `compose.yaml` **no** las pública:
 
 | Variable | Para qué |
 |---|---|

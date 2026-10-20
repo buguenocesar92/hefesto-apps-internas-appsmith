@@ -12,7 +12,7 @@ Appsmith en lugar de ToolJet.**
 |---|---|
 | Componente | Appsmith Community Edition |
 | Imagen | `appsmith/appsmith-ce` |
-| Version fijada en este kit | `v2.5.0` |
+| Versión fijada en este kit | `v2.5.0` |
 | Licencia del nucleo | **Apache License 2.0** |
 | Fuente de la licencia | `LICENSE` en la rama `release` de `github.com/appsmithorg/appsmith` |
 | Modelo de distribucion | Imagen oficial de Docker Hub, publicada por Appsmith Inc. |
@@ -27,32 +27,32 @@ Apache License
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 ```
 
-### Que permite Apache-2.0 en la practica comercial
+### Que permite Apache-2.0 en la práctica comercial
 
 - **Uso comercial:** permitido, sin pagar regalías a nadie.
 - **Distribucion y reventa:** permitida.
 - **Modificacion:** permitida.
 - **Patentado:** hay clausula dePatentado en la seccion 3.
-- **Copyleft:** **ninguno.** No hay obligacion de publicar el codigo fuente de
-  la aplicacion ni de las apps construidas sobre ella.
+- **Copyleft:** **ninguno.** No hay obligacion de publicar el código fuente de
+  la aplicación ni de las apps construidas sobre ella.
 - **Atribucion:** hay que mantener los avisos de licencia de los archivos de
   licencia originales al redistribuir.
 
 En terminos practicalos: Hefesto puede cobrar por instalar, configurar,
-personalizar y mantener la instancia, y el codigo del cliente queda en el
-cliente. No hay que abrir el codigo de las apps internas.
+personalizar y mantener la instancia, y el código del cliente queda en el
+cliente. No hay que abrir el código de las apps internas.
 
 ## 2. Por que Appsmith y no ToolJet
 
 | Criterio | Appsmith CE | ToolJet |
 |---|---|---|
 | Licencia del nucleo | **Apache-2.0**, sin copyleft | **AGPL-3.0** |
-| Consecuencia legal de AGPL | — | Si se ofrece el software como servicio accesible por red, la AGPL obliga a ofrecer el codigo fuente correspondiente a los usuarios. Es una exposicion real para una Pyme que contrata un servicio y no quiere publicar su codigo. |
+| Consecuencia legal de AGPL | — | Si se ofrece el software como servicio accesible por red, la AGPL obliga a ofrecer el código fuente correspondiente a los usuarios. Es una exposicion real para una Pyme que contrata un servicio y no quiere publicar su código. |
 | Topologia de despliegue | **Un solo contenedor**: Appsmith, MongoDB, Redis, PostgreSQL embebido, Caddy y supervisord en una imagen | Varios servicios que hay que operar y monitorizar por separado |
-| Costo de operacion para una Pyme | Un VPS | Varios contenedores, varios puntos de falla |
+| Costo de operación para una Pyme | Un VPS | Varios contenedores, varios puntos de falla |
 
 **Conclusion comercial:** ToolJet es AGPL-3.0. Bajo AGPL, un despliegue
-autohospedado que se ofrece por red puede obligar a compartir el codigo fuente
+autohospedado que se ofrece por red puede obligar a compartir el código fuente
 del servicio. Para una Pyme que paga por un panel interno, esa es una
 conversacion que Hefesto quiere evitar por completo. Appsmith es Apache-2.0:
 se instala, se configura, se vende y no arrastra ninguna obligacion de
@@ -81,7 +81,7 @@ mano ni se compilan, pero se anotan por transparencia:
 
 Appsmith **no es PostgreSQL**. Su almacén interno es **MongoDB**, ejecutado
 embebido dentro del propio contenedor desde `/appsmith-stacks/data/mongodb`, con
-Redis embebido tambien. Esto esta confirmado por la documentacion oficial de
+Redis embebido también. Esto esta confirmado por la documentacion oficial de
 Appsmith, que describe MongoDB como base de datos del sistema, y por el
 archivo `deploy/docker/fs/opt/appsmith/templates/supervisord/mongodb.conf` del
 repositorio, que la arranca con `mongod --port 27017 --dbpath .` y
@@ -95,7 +95,7 @@ Consecuencia comercial que hay que decir de frente:
   las apps**, no para el almacenamiento de Appsmith. Ver `docs/10`.
 - La licencia SSPL de MongoDB afecta a quien **redistribuye** MongoDB, no al
   cliente que usa una app web. Hefesto no redistribuye MongoDB: se descarga
-  desde Docker Hub al desplegar. Aun asi, conviene que el cliente lo sepa.
+  desde Docker Hub al desplegar. Aun así, conviene que el cliente lo sepa.
 
 ## 4. Lo que este kit contiene
 
@@ -109,7 +109,7 @@ Consecuencia comercial que hay que decir de frente:
 | `config/*` | MIT (Hefesto Studio) |
 
 El contenido de este kit es MIT. Los archivos de Hefesto no arrastran la
-licencia de Appsmith ni al reves: son originales. La aplicacion instalada
+licencia de Appsmith ni al reves: son originales. La aplicación instalada
 arrastra Apache-2.0 y las licencias de sus dependencias, que se enumeran mas
 arriba.
 
@@ -117,16 +117,16 @@ arriba.
 
 Al entregar el despliegue a un cliente:
 
-1. Mencionar en la propuesta que la aplicacion es **Apache-2.0**.
+1. Mencionar en la propuesta que la aplicación es **Apache-2.0**.
 2. Conservar el `LICENSE` de Appsmith accesible. La forma simple y suficiente es
    dejar en el kit un archivo `LICENSE-APPSMITH.txt` con el texto de Apache-2.0.
 3. No quitar los avisos de licencia de la interfaz ni de la imagen.
 
-## 6. Verificacion
+## 6. Verificación
 
 | Hecho | Como se verifico | Fecha |
 |---|---|---|
 | Licencia Apache-2.0 del nucleo | Lectura de `LICENSE` en `github.com/appsmithorg/appsmith`, rama `release` | 2026-10-16 |
-| Imagen oficial `appsmith-ce` | Pagina oficial de instalacion con Docker en la documentacion de Appsmith | 2026-10-16 |
+| Imagen oficial `appsmith-ce` | Pagina oficial de instalación con Docker en la documentacion de Appsmith | 2026-10-16 |
 | MongoDB como almacen interno | Pagina de variables de entorno de la documentacion oficial, que describe MongoDB como base de datos del sistema, mas `mongodb.conf` en el repositorio | 2026-10-16 |
-| ToolJet es AGPL-3.0 | Declarado por el proveedor en su propio repositorio. **No fue verificado por Hefesto contra el repositorio de ToolJet en esta sesion.** Confirmarlo antes de usar esta tabla en una propuesta comercial. | — |
+| ToolJet es AGPL-3.0 | Declarado por el proveedor en su propio repositorio. **No fue verificado por Hefesto contra el repositorio de ToolJet en esta sesión.** Confirmarlo antes de usar esta tabla en una propuesta comercial. | — |

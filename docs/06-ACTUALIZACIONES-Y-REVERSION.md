@@ -128,7 +128,7 @@ Después de la reversión:
 
 ## Actualizaciones de seguridad
 
-Appsmith publica correcciones de seguridad. Para una instancia de cliente:
+Appsmith pública correcciones de seguridad. Para una instancia de cliente:
 
 1. Revisar la sección *Security* del repositorio de Appsmith, donde publican
    los avisos.
@@ -167,5 +167,5 @@ cuando algo falla.
 ---
 
 Ver también: [`05-RESPALDOS-Y-RESTAURACION.md`](05-RESPALDOS-Y-RESTAURACION.md) ·
-[`VERSION.md`](../VERSION.md) ·
+[`VERSION.md`](../VERSIÓN.md) ·
 [`07-PRUEBAS-DE-ACEPTACION.md`](07-PRUEBAS-DE-ACEPTACION.md)

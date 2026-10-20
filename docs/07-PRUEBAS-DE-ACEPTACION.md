@@ -133,7 +133,7 @@ Nada de esta lista tiene resultado. Cada punto necesita un servidor real.
 | P43 | Actualizar de `v2.5.0` a una versión posterior | **PENDIENTE** |
 | P44 | La migración de la base interna corre sin error | **PENDIENTE** |
 | P45 | La reversión por restauración funciona | **PENDIENTE** |
-| P46 | Appsmith publica avisos de seguridad en un canal identificable | **PENDIENTE** |
+| P46 | Appsmith pública avisos de seguridad en un canal identificable | **PENDIENTE** |
 
 ### 2.7 Otros pendientes
 
@@ -247,5 +247,5 @@ exige un proceso real detrás.
 ---
 
 Ver también: [`README.md`](../README.md) ·
-[`VERSION.md`](../VERSION.md) ·
+[`VERSION.md`](../VERSIÓN.md) ·
 [`LICENCIAS.md`](../LICENCIAS.md)

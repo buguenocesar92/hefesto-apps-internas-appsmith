@@ -213,5 +213,5 @@ Todo esto está detallado con su número de prueba en
 ---
 
 Ver también: [`LICENCIAS.md`](../LICENCIAS.md) ·
-[`VERSION.md`](../VERSION.md) ·
+[`VERSION.md`](../VERSIÓN.md) ·
 [`07-PRUEBAS-DE-ACEPTACION.md`](07-PRUEBAS-DE-ACEPTACION.md)

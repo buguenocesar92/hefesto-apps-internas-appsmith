@@ -1,28 +1,28 @@
-# VERSION.md
+# VERSIÓN.md
 
 ## Kit
 
 | Campo | Valor |
 |---|---|
 | Nombre del kit | `hefesto-appsmith-apps-internas` |
-| Version del kit | `1.0.0` |
+| Versión del kit | `1.0.0` |
 | Estado | **kit preparado** (no desplegado ni probado en un servidor) |
 | Fecha de preparacion | 2026-10-16 |
 | Responsable | Hefesto Studio |
 
-## Imagen de la aplicacion
+## Imagen de la aplicación
 
 | Campo | Valor |
 |---|---|
 | Repositorio | `appsmith/appsmith-ce` (Docker Hub oficial) |
 | Etiqueta fijada | **`v2.5.0`** |
-| Fecha de publicacion de la etiqueta | 2026-10-09 |
+| Fecha de publicación de la etiqueta | 2026-10-09 |
 | Digest del indice | `sha256:5b6133ab8317b98edf9dc0315a02d12f9861ab2acc89386c0b1f5b7938dfeb90` |
 | Plataformas del indice | `linux/amd64`, `linux/arm64` |
 | Edicion | Community Edition |
 | Licencia del nucleo | Apache-2.0 |
 
-Etiquetas（NUNCA usar en produccion）
+Etiquetas（NUNCA usar en producción）
 - `latest` y `release` son etiquetas moviles: cambian de contenido sin aviso.
   Dejarlas solo en un ambiente de prueba.
 
@@ -38,13 +38,13 @@ GET https://hub.docker.com/v2/repositories/appsmith/appsmith-ce/tags
 Etiquetas devueltas, de mas reciente a mas antigua: `release`, `v2.5.0`,
 `v2.4.3`, `v2.4.2`, `v2.4.1`, `v2.4`, entre otras.
 
-`v2.5.0` es la etiqueta de version semantica mas reciente. La etiqueta `release`
-se publico el 2026-10-16 con un digest distinto al de `v2.5.0`
+`v2.5.0` es la etiqueta de versión semantica mas reciente. La etiqueta `release`
+se público el 2026-10-16 con un digest distinto al de `v2.5.0`
 (`sha256:2bcc973b52f2…`), o sea que apunta a una compilacion mas nueva que
 todavia no tiene etiqueta semantica. Por eso el kit fija `v2.5.0` y no
 `release`.
 
-### Como fijar por digest (recomendado en produccion)
+### Como fijar por digest (recomendado en producción)
 
 ```bash
 docker pull appsmith/appsmith-ce@sha256:5b6133ab8317b98edf9dc0315a02d12f9861ab2acc89386c0b1f5b7938dfeb90
@@ -62,7 +62,7 @@ administrados por supervisord:
 
 | Componente | Rol | Puerto | Expuesto a red |
 |---|---|---|---|
-| `editor` / `rts` / `backend` | Servidor de Appsmith y editor | 80 | Si (unico) |
+| `editor` / `rts` / `backend` | Servidor de Appsmith y editor | 80 | Si (único) |
 | `mongodb` | Base de datos interna del sistema | 27017 | No (`--bind_ip localhost`) |
 | `redis` | Cache y sesiones | 6379 | No |
 | `postgres` | PostgreSQL embebido | local | No |
@@ -74,16 +74,16 @@ Fuente: `deploy/docker/fs/opt/appsmith/templates/supervisord/*.conf` y
 
 ## Historico de versiones del kit
 
-| Version | Fecha | Cambios |
+| Versión | Fecha | Cambios |
 |---|---|---|
-| 1.0.0 | 2026-10-16 | Version inicial |
+| 1.0.0 | 2026-10-16 | Versión inicial |
 
-## Procedimiento de cambio de version
+## Procedimiento de cambio de versión
 
 1. Consultar Docker Hub y elegir la etiqueta semantica mas reciente.
 2. Actualizar `image:` en `compose.yaml` y el digest en el comentario.
 3. Actualizar el digest y la fecha en esta tabla.
 4. Respaldar ANTES de actualizar (`scripts/respaldo.sh`).
-5. Levantar la version nueva en un ambiente de prueba con una copia del
-   respaldo antes de tocar produccion.
+5. Levantar la versión nueva en un ambiente de prueba con una copia del
+   respaldo antes de tocar producción.
 6. Ver `docs/06-ACTUALIZACIONES-Y-REVERSION.md`.

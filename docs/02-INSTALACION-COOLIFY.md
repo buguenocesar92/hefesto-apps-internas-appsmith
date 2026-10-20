@@ -86,7 +86,7 @@ En la pestaña *Configuration* del recurso:
 
 ### 5. La diferencia de red, en detalle
 
-`compose.yaml` publica el puerto así:
+`compose.yaml` pública el puerto así:
 
 ```yaml
 ports:
