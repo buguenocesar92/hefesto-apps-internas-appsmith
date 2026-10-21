@@ -74,7 +74,7 @@ while [ $# -gt 0 ]; do
     --salida) SALIDA="${2:?falta el valor de --salida}"; shift 2 ;;
     --servicio) SERVICIO="${2:?falta el valor de --servicio}"; shift 2 ;;
     --archivo-compose) ARCHIVO_COMPOSE="${2:?falta el valor de --archivo-compose}"; shift 2 ;;
-    --override-coolify) USAR_OVERRIDE_COOLIFY="si"; shift ;;
+    --override-coolify) export USAR_OVERRIDE_COOLIFY="si"; shift ;;
     --nombre-container) NOMBRE_CONTAINER="${2:?falta el valor de --nombre-container}"; shift 2 ;;
     --mantener-detenido) MANTENER_DETENIDO="si"; shift ;;
     --ayuda|-h) uso; exit 0 ;;
@@ -101,6 +101,7 @@ VOLUMEN="$(nombre_volumen "$CID")"
 
 ESTADO_INICIAL="$(estado_contenedor "$CID")"
 log "contenedor : $CONTAINER_ACTUAL ($ESTADO_INICIAL)"
+log "esperado   : $NOMBRE_CONTAINER (solo informativo)"
 log "imagen     : $IMAGEN"
 log "volumen    : $VOLUMEN"
 
