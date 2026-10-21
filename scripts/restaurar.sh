@@ -39,7 +39,7 @@ FUERZA="no"
 SERVICIO="appsmith"
 ARCHIVO_COMPOSE=""
 VOLUMEN_DESTINO=""
-USAR_OVERRIDE_COOLIFY="no"
+export USAR_OVERRIDE_COOLIFY="no"
 
 uso() {
   cat >&2 <<'EOF'
@@ -69,7 +69,7 @@ while [ $# -gt 0 ]; do
     --destino) VOLUMEN_DESTINO="${2:?falta el valor de --destino}"; shift 2 ;;
     --servicio) SERVICIO="${2:?falta el valor de --servicio}"; shift 2 ;;
     --archivo-compose) ARCHIVO_COMPOSE="${2:?falta el valor de --archivo-compose}"; shift 2 ;;
-    --override-coolify) USAR_OVERRIDE_COOLIFY="si"; shift ;;
+    --override-coolify) export USAR_OVERRIDE_COOLIFY="si"; shift ;;
     --ayuda|-h) uso; exit 0 ;;
     *) err "opcion desconocida: $1"; uso; exit 2 ;;
   esac
